@@ -336,6 +336,21 @@ public final class DoseHistoryService {
         }
     }
 
+    /// Resets a dose to pending status
+    /// - Parameter doseHistory: The dose history to reset
+    /// - Throws: PersistenceError if update fails
+    public func resetToPending(_ doseHistory: DoseHistory) throws {
+        doseHistory.status = "pending"
+        doseHistory.actualTime = nil
+        doseHistory.notes = nil
+
+        do {
+            try persistenceController.saveContext(doseHistory.managedObjectContext!)
+        } catch {
+            throw PersistenceError.saveFailed(error)
+        }
+    }
+
     // MARK: - Delete
 
     /// Deletes a dose history

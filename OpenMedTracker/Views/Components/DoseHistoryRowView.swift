@@ -51,7 +51,7 @@ struct DoseHistoryRowView: View {
                 }
 
                 // Timezone info
-                if let timezone = doseHistory.recordedTimezone {
+                if let timezone = doseHistory.timezoneIdentifier {
                     Text("Timezone: \(timezone)")
                         .font(.caption2)
                         .foregroundColor(.secondary)
@@ -95,7 +95,7 @@ struct DoseHistoryRowView: View {
             dose.status = "taken"
             dose.scheduledTime = Date()
             dose.actualTime = Date().addingTimeInterval(300) // 5 minutes later
-            dose.recordedTimezone = "America/New_York"
+            dose.timezoneIdentifier = "America/New_York"
             return dose
         }())
     }
