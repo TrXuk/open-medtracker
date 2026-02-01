@@ -46,23 +46,31 @@ public class Schedule: NSManagedObject {
         }
 
         var name: String {
-            let formatter = DateFormatter()
-            return formatter.weekdaySymbols[rawValue]
+            Schedule.weekdayFormatter.weekdaySymbols[rawValue]
         }
 
         var shortName: String {
-            let formatter = DateFormatter()
-            return formatter.shortWeekdaySymbols[rawValue]
+            Schedule.weekdayFormatter.shortWeekdaySymbols[rawValue]
         }
     }
+
+    // MARK: - Cached Formatters
+
+    /// Cached time formatter for performance
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        return formatter
+    }()
+
+    /// Cached weekday symbols formatter for performance
+    private static let weekdayFormatter = DateFormatter()
 
     // MARK: - Computed Properties
 
     /// Formatted time string (e.g., "9:00 AM")
     public var formattedTime: String {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        return formatter.string(from: timeOfDay)
+        Self.timeFormatter.string(from: timeOfDay)
     }
 
     /// Array of enabled days

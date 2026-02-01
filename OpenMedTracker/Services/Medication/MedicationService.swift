@@ -270,16 +270,21 @@ public final class MedicationService {
     /// - Parameter includeActive: Whether to delete active medications (defaults to false)
     /// - Throws: PersistenceError if delete fails
     public func deleteAll(includeActive: Bool = false) throws {
-        let medications = try fetchAll(includeInactive: true)
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Medication")
 
-        let toDelete = includeActive ? medications : medications.filter { !$0.isActive }
-
-        for medication in toDelete {
-            persistenceController.viewContext.delete(medication)
+        if !includeActive {
+            fetchRequest.predicate = NSPredicate(format: "isActive == NO")
         }
 
+        let batchDeleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+        batchDeleteRequest.resultType = .resultTypeObjectIDs
+
         do {
-            try persistenceController.saveViewContext()
+            let result = try persistenceController.viewContext.execute(batchDeleteRequest) as? NSBatchDeleteResult
+            guard let objectIDArray = result?.result as? [NSManagedObjectID] else { return }
+
+            let changes = [NSDeletedObjectsKey: objectIDArray]
+            NSManagedObjectContext.mergeChanges(fromRemoteContextSave: changes, into: [persistenceController.viewContext])
         } catch {
             throw PersistenceError.deleteFailed(error)
         }

@@ -189,9 +189,24 @@ public final class ScheduleService {
         on date: Date,
         in context: NSManagedObjectContext? = nil
     ) throws -> [Schedule] {
-        let allSchedules = try fetchAll(includeDisabled: false, in: context)
+        let ctx = context ?? persistenceController.viewContext
+        let request = Schedule.fetchRequest()
 
-        return allSchedules.filter { $0.isDueOn(date: date) }
+        // Fetch only enabled schedules with medication relationship prefetched
+        request.predicate = NSPredicate(format: "isEnabled == YES")
+        request.sortDescriptors = [
+            NSSortDescriptor(keyPath: \Schedule.timeOfDay, ascending: true)
+        ]
+        // Prefetch medication relationship to avoid n+1 queries
+        request.relationshipKeyPathsForPrefetching = ["medication"]
+
+        do {
+            let enabledSchedules = try ctx.fetch(request)
+            // Filter in memory for day-of-week check (bitwise operations not supported in Core Data predicates)
+            return enabledSchedules.filter { $0.isDueOn(date: date) }
+        } catch {
+            throw PersistenceError.fetchFailed(error)
+        }
     }
 
     // MARK: - Update
@@ -276,14 +291,26 @@ public final class ScheduleService {
     /// - Parameter medication: The medication
     /// - Throws: PersistenceError if delete fails
     public func deleteSchedules(for medication: Medication) throws {
-        let schedules = try fetchSchedules(for: medication, includeDisabled: true)
-
-        for schedule in schedules {
-            medication.managedObjectContext?.delete(schedule)
+        guard let context = medication.managedObjectContext else {
+            throw PersistenceError.deleteFailed(
+                NSError(domain: "ScheduleService", code: -1, userInfo: [
+                    NSLocalizedDescriptionKey: "Medication has no context"
+                ])
+            )
         }
 
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Schedule")
+        fetchRequest.predicate = NSPredicate(format: "medication == %@", medication)
+
+        let batchDeleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+        batchDeleteRequest.resultType = .resultTypeObjectIDs
+
         do {
-            try persistenceController.saveContext(medication.managedObjectContext!)
+            let result = try context.execute(batchDeleteRequest) as? NSBatchDeleteResult
+            guard let objectIDArray = result?.result as? [NSManagedObjectID] else { return }
+
+            let changes = [NSDeletedObjectsKey: objectIDArray]
+            NSManagedObjectContext.mergeChanges(fromRemoteContextSave: changes, into: [context])
         } catch {
             throw PersistenceError.deleteFailed(error)
         }
