@@ -33,6 +33,8 @@ struct DoseHistoryView: View {
                     } label: {
                         Image(systemName: hasActiveFilters ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
                     }
+                    .accessibilityLabel("Filter dose history")
+                    .accessibilityHint(hasActiveFilters ? "Filters are currently active. Tap to modify filters" : "Opens filter options to narrow down dose history")
                 }
             }
             .sheet(isPresented: $showingFilters) {
@@ -85,7 +87,8 @@ struct DoseHistoryView: View {
                         Text("Adherence Rate")
                             .font(.headline)
                         Text("\(Int(viewModel.adherenceRate * 100))%")
-                            .font(.system(size: 36, weight: .bold))
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
                             .foregroundColor(adherenceColor)
                     }
 
@@ -97,6 +100,9 @@ struct DoseHistoryView: View {
                 .padding()
                 .background(Color(.systemGray6))
                 .cornerRadius(12)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Adherence rate \(Int(viewModel.adherenceRate * 100)) percent")
+                .accessibilityValue(adherenceDescription)
 
                 // Status counts
                 HStack(spacing: 12) {
@@ -181,6 +187,16 @@ struct DoseHistoryView: View {
     private var hasActiveFilters: Bool {
         viewModel.selectedMedication != nil || viewModel.selectedStatus != nil
     }
+
+    private var adherenceDescription: String {
+        if viewModel.adherenceRate >= 0.9 {
+            return "Excellent adherence"
+        } else if viewModel.adherenceRate >= 0.7 {
+            return "Good adherence"
+        } else {
+            return "Needs improvement"
+        }
+    }
 }
 
 /// Statistics card view
@@ -206,8 +222,10 @@ struct StatCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(color.opacity(0.1))
+        .background(color.opacity(0.15))
         .cornerRadius(12)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(count) \(title.lowercased()) \(count == 1 ? "dose" : "doses")")
     }
 }
 
@@ -227,6 +245,7 @@ struct CircularProgressView: View {
                 .rotationEffect(.degrees(-90))
                 .animation(.easeInOut, value: progress)
         }
+        .accessibilityHidden(true) // Progress info is conveyed via parent label
     }
 }
 
@@ -256,16 +275,19 @@ struct DoseHistoryFiltersView: View {
                         startDate = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
                         endDate = Date()
                     }
+                    .accessibilityHint("Sets date range to the last 7 days")
 
                     Button("Last 30 Days") {
                         startDate = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
                         endDate = Date()
                     }
+                    .accessibilityHint("Sets date range to the last 30 days")
 
                     Button("Last 90 Days") {
                         startDate = Calendar.current.date(byAdding: .day, value: -90, to: Date()) ?? Date()
                         endDate = Date()
                     }
+                    .accessibilityHint("Sets date range to the last 90 days")
                 }
 
                 Section("Status") {

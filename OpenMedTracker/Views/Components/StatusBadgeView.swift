@@ -17,6 +17,8 @@ struct StatusBadgeView: View {
         .background(backgroundColor)
         .foregroundColor(foregroundColor)
         .cornerRadius(8)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Status: \(displayText)")
     }
 
     private var iconName: String {
