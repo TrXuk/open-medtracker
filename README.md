@@ -1,9 +1,18 @@
-# open-medtracker
-Open source medicine tracker with international travel support for iPhone
+# Open MedTracker
+
+Open source medication tracker with international travel support for iPhone.
 
 ## Overview
 
-OpenMedTracker is an iOS application designed to help users track their medication schedules, with special attention to international travel scenarios where timezone changes can affect medication timing.
+Open MedTracker helps international travelers maintain consistent medication schedules across time zones. The app features intelligent timezone handling, flexible schedule adjustment strategies, and complete dose history tracking.
+
+## Key Features
+
+- **Timezone-Aware Scheduling**: Automatically detect timezone changes and adjust medication schedules
+- **Flexible Adjustment Strategies**: Choose how your schedules adapt to travel (keep local time, keep absolute time, gradual shift, or custom)
+- **Complete History**: Track all doses taken with full timezone context
+- **Offline-First**: All data stored locally, no internet required
+- **Privacy-Focused**: Your medication data stays on your device
 
 ## Project Structure
 
@@ -62,6 +71,29 @@ NotificationCenter.default.addObserver(
 
 See [TimezoneManager.md](OpenMedTracker/Services/TimezoneManager.md) for detailed documentation.
 
+## Project Status
+
+Currently in **Phase 1: Architecture & Design**
+
+- ✅ Phase 1.1: Project setup
+- ✅ Phase 1.2: Architecture design
+- ⏳ Phase 1.3: Data layer implementation
+- ⏳ Phase 1.4: Business logic
+- ⏳ Phase 1.5: UI implementation
+
+## Documentation
+
+### Architecture Documentation
+
+Comprehensive architecture documentation is available in [`docs/architecture/`](./docs/architecture/):
+
+- **[Overview](./docs/architecture/overview.md)** - High-level system architecture and design principles
+- **[Data Models](./docs/architecture/data-models.md)** - Detailed specifications for Medication, Schedule, DoseHistory, and TimezoneEvent
+- **[Timezone Strategy](./docs/architecture/timezone-strategy.md)** - Comprehensive timezone handling approach
+- **[Data Schema](./docs/architecture/data-schema.md)** - Complete database schema reference
+
+Start with the [Architecture Overview](./docs/architecture/overview.md) to understand the system design.
+
 ## Development
 
 ### Testing
@@ -80,11 +112,13 @@ Check out `TimezoneManagerExample.swift` for comprehensive usage examples includ
 - Timezone change handling
 - Offset calculations
 
-## Requirements
+## Technology Stack
 
-- iOS 15.0+
-- Swift 5.5+
-- Xcode 13.0+
+- **Platform**: iOS 17+
+- **Language**: Swift 5.9+
+- **UI Framework**: SwiftUI
+- **Data Persistence**: Core Data
+- **Architecture**: MVVM + Repository Pattern
 
 ## Roadmap
 
@@ -94,6 +128,14 @@ Check out `TimezoneManagerExample.swift` for comprehensive usage examples includ
 - 🔜 Phase 3.1: Notification Service
 - 🔜 Phase 3.2: User Interface
 
+## Contributing
+
+This is an open-source project and contributions are welcome! Please read the [Architecture Documentation](./docs/architecture/) to understand the system design before contributing.
+
 ## License
 
 TBD
+
+## Contact
+
+Issues and discussions: [GitHub Issues](https://github.com/your-org/open-medtracker/issues)
