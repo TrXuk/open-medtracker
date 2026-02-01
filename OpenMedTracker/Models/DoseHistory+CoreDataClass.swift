@@ -77,6 +77,12 @@ public class DoseHistory: NSManagedObject {
         return actual.timeIntervalSince(scheduledTime)
     }
 
+    /// Time difference in minutes (positive = late, negative = early)
+    public var timeDifferenceMinutes: Double? {
+        guard let diff = timeDifference else { return nil }
+        return diff / 60.0
+    }
+
     /// Human-readable time difference
     public var timeDifferenceDescription: String? {
         guard let diff = timeDifference else { return nil }

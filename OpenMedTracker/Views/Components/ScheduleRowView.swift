@@ -20,14 +20,12 @@ struct ScheduleRowView: View {
                             .font(.subheadline)
                     }
 
-                    if let frequency = schedule.frequency {
-                        Text(frequency.capitalized)
-                            .font(.caption)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.blue.opacity(0.1))
-                            .cornerRadius(4)
-                    }
+                    Text(schedule.frequency.capitalized)
+                        .font(.caption)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.blue.opacity(0.1))
+                        .cornerRadius(4)
                 }
                 .foregroundColor(.secondary)
 
