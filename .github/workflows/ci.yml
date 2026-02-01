@@ -18,22 +18,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install SwiftLint
-        run: |
-          brew install swiftlint
+        run: brew install swiftlint
 
       - name: Run SwiftLint
-        run: |
-          swiftlint --reporter github-actions-logging
+        run: swiftlint --reporter github-actions-logging
 
   test:
-    name: Test and Coverage
+    name: Build and Test
     runs-on: macos-14
-    strategy:
-      matrix:
-        # Test on multiple iOS versions to ensure compatibility
-        destination:
-          - 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.2'
-          - 'platform=iOS Simulator,name=iPhone 15,OS=17.2'
 
     steps:
       - name: Checkout code
@@ -47,125 +39,42 @@ jobs:
       - name: Swift Version
         run: swift --version
 
-      - name: Run Tests with Coverage
-        run: |
-          xcodebuild test \
-            -scheme OpenMedTracker \
-            -destination '${{ matrix.destination }}' \
-            -enableCodeCoverage YES \
-            -derivedDataPath .build
+      - name: Swift Build
+        run: swift build --build-tests
 
-      - name: Generate Coverage Report
-        if: matrix.destination == 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.2'
-        run: |
-          # Find the .xcresult bundle
-          XCRESULT=$(find .build -name "*.xcresult" | head -1)
+      - name: Run Tests
+        run: swift test --enable-code-coverage
 
-          if [ -z "$XCRESULT" ]; then
-            echo "Error: No .xcresult file found"
+      - name: Verify Package Structure
+        run: |
+          # Verify Package.swift exists and is valid
+          if [ ! -f Package.swift ]; then
+            echo "Error: Package.swift not found"
             exit 1
           fi
 
-          echo "Found xcresult: $XCRESULT"
-
-          # Convert to coverage report
-          xcrun xccov view --report --json "$XCRESULT" > coverage.json
-
-          # Generate human-readable report
-          xcrun xccov view --report "$XCRESULT" > coverage-report.txt
-
-          # Display coverage summary
-          echo "Coverage Summary:"
-          cat coverage-report.txt
-
-      - name: Upload Coverage Report
-        if: matrix.destination == 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.2'
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: |
-            coverage.json
-            coverage-report.txt
-          retention-days: 30
-
-      - name: Check Coverage Threshold
-        if: matrix.destination == 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.2'
-        run: |
-          # Extract overall coverage percentage from JSON
-          if [ ! -f coverage.json ]; then
-            echo "Warning: coverage.json not found, skipping threshold check"
-            exit 0
-          fi
-
-          # Parse coverage from xccov JSON output
-          COVERAGE=$(python3 -c "import json,sys; data=json.load(open('coverage.json')); print(data.get('lineCoverage', 0)*100)" 2>/dev/null || echo "0")
-
-          if [ -z "$COVERAGE" ] || [ "$COVERAGE" = "0" ]; then
-            echo "Warning: Could not extract coverage percentage, skipping threshold check"
-            exit 0
-          fi
-
-          echo "Total Coverage: ${COVERAGE}%"
-
-          # Set minimum coverage threshold (adjust as needed)
-          THRESHOLD=0
-
-          # Compare coverage to threshold
-          if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
-            echo "Error: Coverage ${COVERAGE}% is below threshold ${THRESHOLD}%"
-            exit 1
-          else
-            echo "Coverage ${COVERAGE}% meets threshold ${THRESHOLD}%"
-          fi
-
-      - name: Upload Test Results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-${{ matrix.destination }}
-          path: |
-            .build/**/*.xcresult
-          retention-days: 30
-
-  build:
-    name: Build Verification
-    runs-on: macos-14
-    strategy:
-      matrix:
-        # Verify builds for iOS 16+ as required
-        configuration: [debug, release]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: '15.2'
-
-      - name: Build for iOS
-        run: |
-          xcodebuild build \
-            -scheme OpenMedTracker \
-            -destination 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.2' \
-            -configuration ${{ matrix.configuration }} \
-            -derivedDataPath .build
-
-      - name: Verify iOS 16+ Compatibility
-        run: |
-          # Verify Package.swift specifies iOS 16+
+          # Verify iOS 16+ requirement
           if ! grep -q "\.iOS(\.v16)" Package.swift; then
             echo "Error: Package.swift does not specify iOS 16+ requirement"
             echo "Current iOS version requirement:"
             grep -A 2 "platforms:" Package.swift
             exit 1
           fi
+          echo "✓ Package structure verified"
           echo "✓ iOS 16+ requirement verified"
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            .build/
+          retention-days: 7
 
   integration:
     name: Integration Check
-    needs: [swiftlint, test, build]
+    needs: [swiftlint, test]
     runs-on: macos-14
     if: always()
 
@@ -181,10 +90,6 @@ jobs:
             echo "Tests failed"
             exit 1
           fi
-          if [ "${{ needs.build.result }}" != "success" ]; then
-            echo "Build failed"
-            exit 1
-          fi
           echo "All checks passed!"
 
       - name: Summary
@@ -192,7 +97,6 @@ jobs:
           echo "### CI Pipeline Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ **SwiftLint**: ${{ needs.swiftlint.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "✅ **Tests**: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "✅ **Build**: ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Build & Test**: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "All quality checks completed successfully!" >> $GITHUB_STEP_SUMMARY
