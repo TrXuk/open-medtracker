@@ -99,11 +99,14 @@ struct SettingsView: View {
                         await viewModel.toggleNotifications(newValue)
                     }
                 }
+                .accessibilityHint("Turns medication reminder notifications on or off")
 
             if settings.notificationsEnabled {
                 Toggle("Notification Sound", isOn: $settings.notificationSound)
+                    .accessibilityHint("Plays a sound with notification alerts")
 
                 Toggle("Enable Snooze", isOn: $settings.snoozeEnabled)
+                    .accessibilityHint("Allows postponing notifications")
 
                 if settings.snoozeEnabled {
                     Stepper(
@@ -112,6 +115,7 @@ struct SettingsView: View {
                         in: 5...30,
                         step: 5
                     )
+                    .accessibilityHint("Adjusts how long notifications are postponed when snoozed")
                 }
             }
         } header: {
@@ -126,6 +130,7 @@ struct SettingsView: View {
     private var timezoneSection: some View {
         Section {
             Toggle("Auto-Detect Timezone", isOn: $settings.autoDetectTimezone)
+                .accessibilityHint("Automatically adjusts medication times when traveling across timezones")
 
             HStack {
                 Text("Current Timezone")
@@ -134,6 +139,8 @@ struct SettingsView: View {
                     .foregroundColor(.secondary)
                     .font(.footnote)
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Current timezone: \(viewModel.currentTimezone)")
 
             if !settings.autoDetectTimezone {
                 NavigationLink {
@@ -146,6 +153,8 @@ struct SettingsView: View {
                             .foregroundColor(.secondary)
                     }
                 }
+                .accessibilityLabel("Preferred timezone: \(settings.preferredTimezone ?? "None")")
+                .accessibilityHint("Select a fixed timezone for medication schedules")
             }
         } header: {
             Label("Timezone", systemImage: "globe")
@@ -164,6 +173,7 @@ struct SettingsView: View {
                 }
             }
             .pickerStyle(.segmented)
+            .accessibilityHint("Choose between light mode, dark mode, or automatic based on system settings")
         } header: {
             Label("Appearance", systemImage: "paintbrush.fill")
         } footer: {
@@ -185,6 +195,7 @@ struct SettingsView: View {
             } label: {
                 Label("Export Data", systemImage: "square.and.arrow.up")
             }
+            .accessibilityHint("Creates a backup file of all your medications, schedules, and history")
 
             if let lastExport = settings.lastExportDate {
                 HStack {
@@ -195,6 +206,8 @@ struct SettingsView: View {
                         .font(.footnote)
                         .foregroundColor(.secondary)
                 }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Last export date: \(lastExport, style: .date)")
             }
 
             Button {
@@ -202,12 +215,14 @@ struct SettingsView: View {
             } label: {
                 Label("Import Data", systemImage: "square.and.arrow.down")
             }
+            .accessibilityHint("Restores data from a previously exported backup file")
 
             Button(role: .destructive) {
                 showingClearDataAlert = true
             } label: {
                 Label("Clear All Data", systemImage: "trash")
             }
+            .accessibilityHint("Permanently deletes all medications, schedules, and history. This cannot be undone")
         } header: {
             Label("Data Management", systemImage: "externaldrive")
         } footer: {
@@ -225,6 +240,8 @@ struct SettingsView: View {
                 Text(viewModel.fullVersionString)
                     .foregroundColor(.secondary)
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("App version: \(viewModel.fullVersionString)")
 
             Button {
                 if let url = URL(string: "https://github.com/your-org/open-medtracker") {
@@ -233,6 +250,7 @@ struct SettingsView: View {
             } label: {
                 Label("GitHub Repository", systemImage: "link")
             }
+            .accessibilityHint("Opens the project source code on GitHub")
 
             Button {
                 if let url = URL(string: "https://github.com/your-org/open-medtracker/blob/main/PRIVACY.md") {
@@ -241,6 +259,7 @@ struct SettingsView: View {
             } label: {
                 Label("Privacy Policy", systemImage: "hand.raised.fill")
             }
+            .accessibilityHint("Opens the privacy policy in your browser")
 
             Button {
                 if let url = URL(string: "https://github.com/your-org/open-medtracker/blob/main/LICENSE") {
@@ -249,6 +268,7 @@ struct SettingsView: View {
             } label: {
                 Label("License", systemImage: "doc.text")
             }
+            .accessibilityHint("Opens the software license information")
 
             Button {
                 if let url = URL(string: "https://github.com/your-org/open-medtracker/issues") {
@@ -257,6 +277,7 @@ struct SettingsView: View {
             } label: {
                 Label("Report an Issue", systemImage: "exclamationmark.bubble")
             }
+            .accessibilityHint("Opens GitHub to report a bug or request a feature")
         } header: {
             Label("About", systemImage: "info.circle")
         } footer: {
@@ -303,6 +324,7 @@ private struct MessageBanner: View {
         HStack(spacing: 12) {
             Image(systemName: type.icon)
                 .foregroundColor(.white)
+                .accessibilityHidden(true)
             Text(message)
                 .font(.subheadline)
                 .foregroundColor(.white)
@@ -313,12 +335,15 @@ private struct MessageBanner: View {
                 Image(systemName: "xmark")
                     .foregroundColor(.white)
             }
+            .accessibilityLabel("Dismiss message")
         }
         .padding()
         .background(type.color)
         .cornerRadius(12)
         .padding()
         .shadow(radius: 4)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(type == .success ? "Success" : "Error"): \(message)")
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                 onDismiss()
@@ -373,6 +398,8 @@ private struct TimezonePickerView: View {
                     }
                 }
                 .buttonStyle(PlainButtonStyle())
+                .accessibilityLabel(timezone)
+                .accessibilityHint(selectedTimezone == timezone ? "Currently selected" : "Select this timezone")
             }
         }
         .navigationTitle("Select Timezone")

@@ -39,12 +39,14 @@ struct MedicationDetailView: View {
                 Button("Edit") {
                     showingEditMedication = true
                 }
+                .accessibilityHint("Edit medication details")
             }
 
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("Done") {
                     dismiss()
                 }
+                .accessibilityHint("Close medication details")
             }
         }
         .sheet(isPresented: $showingEditMedication) {
@@ -150,13 +152,17 @@ struct MedicationDetailView: View {
                     Image(systemName: "plus.circle.fill")
                         .font(.title3)
                 }
+                .accessibilityLabel("Add schedule")
+                .accessibilityHint("Creates a new dose schedule for this medication")
             }
 
             if viewModel.schedules.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "calendar.badge.clock")
                         .font(.system(size: 40))
+                        .imageScale(.large)
                         .foregroundColor(.gray)
+                        .accessibilityHidden(true)
 
                     Text("No schedules yet")
                         .font(.subheadline)
@@ -166,6 +172,7 @@ struct MedicationDetailView: View {
                         showingAddSchedule = true
                     }
                     .buttonStyle(.bordered)
+                    .accessibilityHint("Creates a new dose schedule for this medication")
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
@@ -178,12 +185,15 @@ struct MedicationDetailView: View {
                             .padding()
                             .background(Color(.systemGray6))
                             .cornerRadius(12)
+                            .accessibilityHint("Swipe left for more options")
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button(role: .destructive) {
                                     viewModel.deleteSchedule(schedule)
                                 } label: {
                                     Label("Delete", systemImage: "trash")
                                 }
+                                .accessibilityLabel("Delete schedule")
+                                .accessibilityHint("Permanently removes this schedule")
 
                                 Button {
                                     viewModel.toggleSchedule(schedule)
@@ -194,6 +204,8 @@ struct MedicationDetailView: View {
                                     )
                                 }
                                 .tint(schedule.isEnabled ? .orange : .green)
+                                .accessibilityLabel("\(schedule.isEnabled ? "Disable" : "Enable") schedule")
+                                .accessibilityHint(schedule.isEnabled ? "Stops automatic dose tracking for this schedule" : "Resumes automatic dose tracking for this schedule")
                             }
                     }
                 }
@@ -206,13 +218,15 @@ struct MedicationDetailView: View {
             showingDeleteAlert = true
         } label: {
             Text("Delete Medication")
+                .fontWeight(.semibold)
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color.red.opacity(0.1))
+                .background(Color.red.opacity(0.15))
                 .foregroundColor(.red)
                 .cornerRadius(12)
         }
         .padding(.top, 20)
+        .accessibilityHint("Permanently deletes this medication and all associated data")
     }
 
     private func formatDate(_ date: Date) -> String {

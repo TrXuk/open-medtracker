@@ -33,6 +33,8 @@ struct ScheduleView: View {
                     } label: {
                         Image(systemName: "calendar")
                     }
+                    .accessibilityLabel("Select date")
+                    .accessibilityHint("Opens calendar to choose a different date")
                 }
             }
             .sheet(isPresented: $showingDatePicker) {
@@ -83,6 +85,8 @@ struct ScheduleView: View {
                     Image(systemName: "chevron.left")
                         .font(.title3)
                 }
+                .accessibilityLabel("Previous day")
+                .accessibilityHint("Shows schedule for the previous day")
 
                 Spacer()
 
@@ -96,6 +100,8 @@ struct ScheduleView: View {
                             .foregroundColor(.blue)
                     }
                 }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("\(formatDate(viewModel.selectedDate))\(isToday ? ", Today" : "")")
 
                 Spacer()
 
@@ -106,17 +112,20 @@ struct ScheduleView: View {
                     Image(systemName: "chevron.right")
                         .font(.title3)
                 }
+                .accessibilityLabel("Next day")
+                .accessibilityHint("Shows schedule for the next day")
             }
             .padding()
             .background(Color(.systemGray6))
             .cornerRadius(12)
 
-            if isToday {
+            if !isToday {
                 Button("Jump to Today") {
                     viewModel.selectDate(Date())
                 }
                 .font(.caption)
                 .foregroundColor(.blue)
+                .accessibilityHint("Returns to today's schedule")
             }
         }
     }
@@ -180,6 +189,8 @@ struct DoseCard: View {
                         .foregroundColor(.secondary)
                     }
                 }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(doseAccessibilityLabel)
 
                 Spacer()
 
@@ -194,10 +205,12 @@ struct DoseCard: View {
                         Label("Take", systemImage: "checkmark.circle.fill")
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 8)
-                            .background(Color.green.opacity(0.1))
+                            .background(Color.green.opacity(0.15))
                             .foregroundColor(.green)
                             .cornerRadius(8)
                     }
+                    .accessibilityLabel("Mark \(dose.medicationName ?? "dose") as taken")
+                    .accessibilityHint("Records this dose as taken at the current time")
 
                     Button {
                         onMarkSkipped()
@@ -205,10 +218,12 @@ struct DoseCard: View {
                         Label("Skip", systemImage: "forward.fill")
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 8)
-                            .background(Color.orange.opacity(0.1))
+                            .background(Color.orange.opacity(0.15))
                             .foregroundColor(.orange)
                             .cornerRadius(8)
                     }
+                    .accessibilityLabel("Skip \(dose.medicationName ?? "dose")")
+                    .accessibilityHint("Marks this dose as intentionally skipped")
                 }
             } else if dose.status == "taken", let actualTime = dose.actualTime {
                 HStack(spacing: 4) {
@@ -218,11 +233,21 @@ struct DoseCard: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Dose taken at \(formatTime(actualTime))")
             }
         }
         .padding()
         .background(Color(.systemGray6))
         .cornerRadius(12)
+    }
+
+    private var doseAccessibilityLabel: String {
+        var label = dose.medicationName ?? "Unknown medication"
+        if let scheduledTime = dose.scheduledTime {
+            label += " scheduled for \(formatTime(scheduledTime))"
+        }
+        return label
     }
 
     private func formatTime(_ date: Date) -> String {

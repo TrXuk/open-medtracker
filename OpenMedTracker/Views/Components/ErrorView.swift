@@ -14,7 +14,9 @@ struct ErrorView: View {
         VStack(spacing: 20) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 60))
+                .imageScale(.large)
                 .foregroundColor(.red)
+                .accessibilityHidden(true)
 
             VStack(spacing: 8) {
                 Text("Error")

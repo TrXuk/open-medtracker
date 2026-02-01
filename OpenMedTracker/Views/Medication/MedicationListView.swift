@@ -49,6 +49,8 @@ struct MedicationListView: View {
                     } label: {
                         Image(systemName: "line.3.horizontal.decrease.circle")
                     }
+                    .accessibilityLabel("Filter medications")
+                    .accessibilityHint("Shows filter options to display only active medications")
                 }
 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -57,6 +59,8 @@ struct MedicationListView: View {
                     } label: {
                         Image(systemName: "plus")
                     }
+                    .accessibilityLabel("Add medication")
+                    .accessibilityHint("Opens form to add a new medication")
                 }
             }
             .sheet(isPresented: $showingAddMedication) {
@@ -91,12 +95,16 @@ struct MedicationListView: View {
                     MedicationRowView(medication: medication)
                 }
                 .buttonStyle(PlainButtonStyle())
+                .accessibilityLabel(medicationAccessibilityLabel(for: medication))
+                .accessibilityHint("Double tap to view details. Swipe left for more options.")
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     Button(role: .destructive) {
                         viewModel.deleteMedication(medication)
                     } label: {
                         Label("Delete", systemImage: "trash")
                     }
+                    .accessibilityLabel("Delete \(medication.name ?? "medication")")
+                    .accessibilityHint("Permanently removes this medication and all its data")
 
                     Button {
                         viewModel.toggleActive(medication)
@@ -107,10 +115,31 @@ struct MedicationListView: View {
                         )
                     }
                     .tint(medication.isActive ? .orange : .green)
+                    .accessibilityLabel("\(medication.isActive ? "Deactivate" : "Activate") \(medication.name ?? "medication")")
+                    .accessibilityHint(medication.isActive ? "Stops tracking doses for this medication" : "Resumes tracking doses for this medication")
                 }
             }
         }
         .listStyle(.insetGrouped)
+    }
+
+    private func medicationAccessibilityLabel(for medication: Medication) -> String {
+        var label = medication.name ?? "Unknown medication"
+
+        if let dosageAmount = medication.dosageAmount, let dosageUnit = medication.dosageUnit {
+            label += ", \(dosageAmount, specifier: "%.1f") \(dosageUnit)"
+        }
+
+        if !medication.isActive {
+            label += ", Inactive"
+        }
+
+        if let schedules = medication.schedules as? Set<Schedule>,
+           let nextSchedule = schedules.filter({ $0.isEnabled }).first {
+            label += ", Next dose scheduled"
+        }
+
+        return label
     }
 }
 
