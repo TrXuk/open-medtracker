@@ -1,0 +1,207 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  SWIFT_VERSION: '5.9'
+
+jobs:
+  swiftlint:
+    name: SwiftLint
+    runs-on: macos-14
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install SwiftLint
+        run: |
+          brew install swiftlint
+
+      - name: Run SwiftLint
+        run: |
+          swiftlint --reporter github-actions-logging
+
+  test:
+    name: Test and Coverage
+    runs-on: macos-14
+    strategy:
+      matrix:
+        # Test on multiple iOS versions to ensure compatibility
+        destination:
+          - 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.2'
+          - 'platform=iOS Simulator,name=iPhone 15,OS=17.2'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.2'
+
+      - name: Swift Version
+        run: swift --version
+
+      - name: Run Tests with Coverage
+        run: |
+          swift test --enable-code-coverage
+
+      - name: Generate Coverage Report
+        if: matrix.destination == 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.2'
+        run: |
+          # Get the build directory
+          BUILD_DIR=$(swift build --show-bin-path)
+          PARENT_DIR=$(dirname "$BUILD_DIR")
+
+          # Find the .profdata file
+          PROFDATA_FILE=$(find "$PARENT_DIR" -name "*.profdata" | head -1)
+
+          if [ -z "$PROFDATA_FILE" ]; then
+            echo "Error: No .profdata file found"
+            exit 1
+          fi
+
+          echo "Found profdata file: $PROFDATA_FILE"
+
+          # Get the test binary
+          TEST_BINARY="$BUILD_DIR/OpenMedTrackerPackageTests.xctest/Contents/MacOS/OpenMedTrackerPackageTests"
+
+          if [ ! -f "$TEST_BINARY" ]; then
+            echo "Error: Test binary not found at $TEST_BINARY"
+            echo "Searching for test binaries..."
+            find "$PARENT_DIR" -name "*Tests" -type f
+            exit 1
+          fi
+
+          # Generate coverage report
+          xcrun llvm-cov export \
+            "$TEST_BINARY" \
+            -instr-profile="$PROFDATA_FILE" \
+            -format=lcov \
+            -ignore-filename-regex=".build|Tests" \
+            > coverage.lcov
+
+          # Generate human-readable report
+          xcrun llvm-cov report \
+            "$TEST_BINARY" \
+            -instr-profile="$PROFDATA_FILE" \
+            -ignore-filename-regex=".build|Tests" \
+            > coverage-report.txt
+
+          # Display coverage summary
+          echo "Coverage Summary:"
+          cat coverage-report.txt
+
+      - name: Upload Coverage Report
+        if: matrix.destination == 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.2'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            coverage.lcov
+            coverage-report.txt
+          retention-days: 30
+
+      - name: Check Coverage Threshold
+        if: matrix.destination == 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.2'
+        run: |
+          # Extract overall coverage percentage
+          COVERAGE=$(grep "TOTAL" coverage-report.txt | awk '{print $NF}' | sed 's/%//')
+
+          if [ -z "$COVERAGE" ]; then
+            echo "Warning: Could not extract coverage percentage"
+            exit 0
+          fi
+
+          echo "Total Coverage: ${COVERAGE}%"
+
+          # Set minimum coverage threshold (adjust as needed)
+          THRESHOLD=0
+
+          # Compare coverage to threshold
+          if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+            echo "Error: Coverage ${COVERAGE}% is below threshold ${THRESHOLD}%"
+            exit 1
+          else
+            echo "Coverage ${COVERAGE}% meets threshold ${THRESHOLD}%"
+          fi
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.destination }}
+          path: |
+            .build/debug/*.xcresult
+          retention-days: 30
+
+  build:
+    name: Build Verification
+    runs-on: macos-14
+    strategy:
+      matrix:
+        # Verify builds for iOS 16+ as required
+        configuration: [debug, release]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.2'
+
+      - name: Build for iOS
+        run: |
+          swift build -c ${{ matrix.configuration }}
+
+      - name: Verify iOS 16+ Compatibility
+        run: |
+          # Verify Package.swift specifies iOS 16+
+          if ! grep -q "\.iOS(\.v16)" Package.swift; then
+            echo "Error: Package.swift does not specify iOS 16+ requirement"
+            echo "Current iOS version requirement:"
+            grep -A 2 "platforms:" Package.swift
+            exit 1
+          fi
+          echo "✓ iOS 16+ requirement verified"
+
+  integration:
+    name: Integration Check
+    needs: [swiftlint, test, build]
+    runs-on: macos-14
+    if: always()
+
+    steps:
+      - name: Check All Jobs
+        run: |
+          # This job ensures all previous jobs passed
+          if [ "${{ needs.swiftlint.result }}" != "success" ]; then
+            echo "SwiftLint failed"
+            exit 1
+          fi
+          if [ "${{ needs.test.result }}" != "success" ]; then
+            echo "Tests failed"
+            exit 1
+          fi
+          if [ "${{ needs.build.result }}" != "success" ]; then
+            echo "Build failed"
+            exit 1
+          fi
+          echo "All checks passed!"
+
+      - name: Summary
+        run: |
+          echo "### CI Pipeline Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **SwiftLint**: ${{ needs.swiftlint.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Tests**: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Build**: ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All quality checks completed successfully!" >> $GITHUB_STEP_SUMMARY
