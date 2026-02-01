@@ -18,12 +18,25 @@ Open MedTracker helps international travelers maintain consistent medication sch
 
 ```
 OpenMedTracker/
+├── CoreData/
+│   ├── Model/                          # Core Data model definition
+│   ├── Stack/                          # PersistenceController
+│   ├── Validation/                     # Validation logic
+│   └── Migrations/                     # Migration support
+├── Models/                             # NSManagedObject subclasses
 ├── Services/
-│   ├── TimezoneManager.swift          # Core timezone management service
-│   ├── TimezoneManager.md             # Detailed documentation
-│   └── TimezoneManagerExample.swift   # Usage examples
-├── Models/                             # (Coming soon)
-└── Utilities/                          # (Coming soon)
+│   ├── Medication/                     # MedicationService
+│   ├── Schedule/                       # ScheduleService
+│   ├── DoseHistory/                    # DoseHistoryService
+│   ├── TimezoneEvent/                  # TimezoneEventService
+│   └── TimezoneManager.swift           # Timezone management
+└── Views/
+    ├── App/                            # Main app and ContentView
+    ├── Medication/                     # Medication list, detail, form
+    ├── Schedule/                       # Schedule view and form
+    ├── DoseHistory/                    # Dose history view
+    ├── Components/                     # Reusable UI components
+    └── ViewModels/                     # MVVM view models
 
 Tests/
 └── OpenMedTrackerTests/
@@ -31,6 +44,44 @@ Tests/
 ```
 
 ## Features Implemented
+
+### Phase 1.5: SwiftUI Views ✅
+
+Complete user interface implementation with:
+
+- **Main App Structure**: TabView with three main tabs (Medications, Schedule, History)
+- **Medication Management**:
+  - List view with search and filtering
+  - Detail view with complete medication information
+  - Form for adding/editing medications
+  - Swipe actions for quick operations
+- **Schedule Management**:
+  - Daily dose schedule view
+  - Date navigation and selection
+  - Quick dose logging (take, skip)
+  - Schedule form with time picker and frequency options
+- **Dose History**:
+  - Complete history with status tracking
+  - Adherence statistics and visualizations
+  - Filtering by date range and status
+  - Color-coded status badges
+- **Reusable Components**:
+  - Row views for lists
+  - Status badges
+  - Empty states, loading, and error views
+
+See [UI Implementation Guide](./docs/UI_IMPLEMENTATION.md) for detailed documentation.
+
+### Phase 2.1: Core Data Stack ✅
+
+Complete data layer implementation:
+
+- **Core Data Models**: Medication, Schedule, DoseHistory, TimezoneEvent
+- **CRUD Services**: Full service layer for all entities
+- **Data Validation**: Comprehensive validation with business rules
+- **Migration Support**: Lightweight and progressive migration capabilities
+
+See [Implementation Summary](./IMPLEMENTATION_SUMMARY.md) for details.
 
 ### Phase 2.3: TimezoneManager Service ✅
 
@@ -73,24 +124,32 @@ See [TimezoneManager.md](OpenMedTracker/Services/TimezoneManager.md) for detaile
 
 ## Project Status
 
-Currently in **Phase 1: Architecture & Design**
+Currently in **Phase 1: Core Development**
 
 - ✅ Phase 1.1: Project setup
 - ✅ Phase 1.2: Architecture design
-- ⏳ Phase 1.3: Data layer implementation
-- ⏳ Phase 1.4: Business logic
-- ⏳ Phase 1.5: UI implementation
+- ✅ Phase 1.3: Data layer implementation (Phase 2.1)
+- ✅ Phase 1.4: Business logic (Phase 2.1 Services)
+- ✅ Phase 1.5: UI implementation
+- 🔜 Phase 1.6: Notification system
+- 🔜 Phase 1.7: Testing and polish
 
 ## Documentation
 
 ### Architecture Documentation
 
-Comprehensive architecture documentation is available in [`docs/architecture/`](./docs/architecture/):
+Comprehensive documentation is available:
 
-- **[Overview](./docs/architecture/overview.md)** - High-level system architecture and design principles
+**Architecture & Design:**
+- **[Architecture Overview](./docs/architecture/overview.md)** - High-level system architecture and design principles
 - **[Data Models](./docs/architecture/data-models.md)** - Detailed specifications for Medication, Schedule, DoseHistory, and TimezoneEvent
 - **[Timezone Strategy](./docs/architecture/timezone-strategy.md)** - Comprehensive timezone handling approach
 - **[Data Schema](./docs/architecture/data-schema.md)** - Complete database schema reference
+
+**Implementation:**
+- **[UI Implementation Guide](./docs/UI_IMPLEMENTATION.md)** - Complete SwiftUI views documentation
+- **[Implementation Summary](./IMPLEMENTATION_SUMMARY.md)** - Phase 2.1 Core Data implementation details
+- **[TimezoneManager](./OpenMedTracker/Services/TimezoneManager.md)** - Timezone service documentation
 
 Start with the [Architecture Overview](./docs/architecture/overview.md) to understand the system design.
 
@@ -122,11 +181,17 @@ Check out `TimezoneManagerExample.swift` for comprehensive usage examples includ
 
 ## Roadmap
 
+**Completed:**
+- ✅ Phase 1.2: Architecture design
+- ✅ Phase 2.1: Core Data stack (Models, Services, Validation, Migrations)
 - ✅ Phase 2.3: TimezoneManager Service
-- 🔜 Phase 2.4: Medication Schedule Management
-- 🔜 Phase 2.5: Data Persistence
-- 🔜 Phase 3.1: Notification Service
-- 🔜 Phase 3.2: User Interface
+- ✅ Phase 1.5: SwiftUI UI implementation
+
+**Next Steps:**
+- 🔜 Phase 1.6: Notification Service (Local notifications for dose reminders)
+- 🔜 Phase 1.7: Testing and bug fixes
+- 🔜 Phase 2.0: Beta testing and polish
+- 🔜 Phase 3.0: Advanced features (Apple Watch, HealthKit, CloudKit)
 
 ## Contributing
 
