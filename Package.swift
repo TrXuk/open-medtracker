@@ -15,7 +15,7 @@ let package = Package(
         ),
     ],
     dependencies: [
-        // Add dependencies here
+        .package(url: "https://github.com/nalexn/ViewInspector.git", from: "0.10.0")
     ],
     targets: [
         .target(
@@ -27,6 +27,14 @@ let package = Package(
             name: "OpenMedTrackerTests",
             dependencies: ["OpenMedTracker"],
             path: "Tests/OpenMedTrackerTests"
+        ),
+        .testTarget(
+            name: "OpenMedTrackerViewTests",
+            dependencies: [
+                "OpenMedTracker",
+                .product(name: "ViewInspector", package: "ViewInspector")
+            ],
+            path: "Tests/OpenMedTrackerViewTests"
         ),
     ]
 )
