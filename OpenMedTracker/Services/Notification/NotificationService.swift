@@ -292,10 +292,15 @@ public final class NotificationService: NSObject {
 
     // MARK: - Helper Methods
 
-    private func notificationIdentifier(for schedule: Schedule, at date: Date) -> String {
+    /// Cached date formatter for notification identifiers (DateFormatter creation is expensive)
+    private static let notificationDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyyMMdd-HHmm"
-        let dateString = formatter.string(from: date)
+        return formatter
+    }()
+
+    private func notificationIdentifier(for schedule: Schedule, at date: Date) -> String {
+        let dateString = Self.notificationDateFormatter.string(from: date)
         return "med-\(schedule.id.uuidString)-\(dateString)"
     }
 

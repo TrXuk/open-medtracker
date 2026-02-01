@@ -363,17 +363,18 @@ public final class DoseHistoryService {
     /// - Parameter date: Cutoff date
     /// - Throws: PersistenceError if delete fails
     public func deleteHistory(olderThan date: Date) throws {
-        let request = DoseHistory.fetchRequest()
-        request.predicate = NSPredicate(format: "scheduledTime < %@", date as CVarArg)
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "DoseHistory")
+        fetchRequest.predicate = NSPredicate(format: "scheduledTime < %@", date as CVarArg)
+
+        let batchDeleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+        batchDeleteRequest.resultType = .resultTypeObjectIDs
 
         do {
-            let oldDoses = try persistenceController.viewContext.fetch(request)
+            let result = try persistenceController.viewContext.execute(batchDeleteRequest) as? NSBatchDeleteResult
+            guard let objectIDArray = result?.result as? [NSManagedObjectID] else { return }
 
-            for dose in oldDoses {
-                persistenceController.viewContext.delete(dose)
-            }
-
-            try persistenceController.saveViewContext()
+            let changes = [NSDeletedObjectsKey: objectIDArray]
+            NSManagedObjectContext.mergeChanges(fromRemoteContextSave: changes, into: [persistenceController.viewContext])
         } catch {
             throw PersistenceError.deleteFailed(error)
         }

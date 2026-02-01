@@ -180,6 +180,10 @@ final class TimezoneManager {
         return localOffset - referenceOffset
     }
 
+    /// Cached date formatters for performance (DateFormatter creation is expensive)
+    private var dateFormatters: [String: DateFormatter] = [:]
+    private let formatterQueue = DispatchQueue(label: "com.openmedtracker.timezonemanager.formatter")
+
     /// Formats a date for display in a specific timezone
     /// - Parameters:
     ///   - date: The date to format
@@ -193,11 +197,21 @@ final class TimezoneManager {
         dateStyle: DateFormatter.Style = .medium,
         timeStyle: DateFormatter.Style = .medium
     ) -> String {
-        let formatter = DateFormatter()
-        formatter.timeZone = timezone
-        formatter.dateStyle = dateStyle
-        formatter.timeStyle = timeStyle
-        return formatter.string(from: date)
+        let cacheKey = "\(timezone.identifier)-\(dateStyle.rawValue)-\(timeStyle.rawValue)"
+
+        return formatterQueue.sync {
+            if let cachedFormatter = dateFormatters[cacheKey] {
+                return cachedFormatter.string(from: date)
+            }
+
+            let formatter = DateFormatter()
+            formatter.timeZone = timezone
+            formatter.dateStyle = dateStyle
+            formatter.timeStyle = timeStyle
+            dateFormatters[cacheKey] = formatter
+
+            return formatter.string(from: date)
+        }
     }
 
     /// Returns a formatted string showing the current timezone offset
