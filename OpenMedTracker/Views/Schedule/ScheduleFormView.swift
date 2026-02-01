@@ -64,12 +64,7 @@ struct ScheduleFormView: View {
 
         // Pre-populate fields if editing
         if case .edit(let schedule) = mode {
-            let hour = Int(schedule.timeHour ?? 9)
-            let minute = Int(schedule.timeMinute ?? 0)
-            var components = DateComponents()
-            components.hour = hour
-            components.minute = minute
-            _selectedTime = State(initialValue: Calendar.current.date(from: components) ?? Date())
+            _selectedTime = State(initialValue: schedule.timeOfDay)
             _frequency = State(initialValue: schedule.frequency ?? "daily")
             _isEnabled = State(initialValue: schedule.isEnabled)
 
@@ -291,8 +286,13 @@ struct ScheduleFormView: View {
 
             let schedule = Schedule(context: context)
             schedule.medication = medication
-            schedule.timeHour = 9
-            schedule.timeMinute = 0
+
+            // Set time to 9:00 AM
+            var components = DateComponents()
+            components.hour = 9
+            components.minute = 0
+            schedule.timeOfDay = Calendar.current.date(from: components) ?? Date()
+
             schedule.frequency = "daily"
             schedule.daysOfWeek = 127
             schedule.isEnabled = true

@@ -50,18 +50,9 @@ struct ScheduleRowView: View {
     }
 
     private func formatTime() -> String {
-        let hour = Int(schedule.timeHour ?? 0)
-        let minute = Int(schedule.timeMinute ?? 0)
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
-        let calendar = Calendar.current
-        var components = DateComponents()
-        components.hour = hour
-        components.minute = minute
-        if let date = calendar.date(from: components) {
-            return formatter.string(from: date)
-        }
-        return "\(hour):\(String(format: "%02d", minute))"
+        return formatter.string(from: schedule.timeOfDay)
     }
 
     private func formatDaysOfWeek() -> String {
@@ -89,8 +80,13 @@ struct ScheduleRowView: View {
             let schedule = Schedule(context: context)
             schedule.id = UUID()
             schedule.medication = medication
-            schedule.timeHour = 9
-            schedule.timeMinute = 0
+
+            // Set time to 9:00 AM
+            var components = DateComponents()
+            components.hour = 9
+            components.minute = 0
+            schedule.timeOfDay = Calendar.current.date(from: components) ?? Date()
+
             schedule.frequency = "daily"
             schedule.daysOfWeek = 127 // Every day
             schedule.isEnabled = true
