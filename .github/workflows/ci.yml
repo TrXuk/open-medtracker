@@ -49,49 +49,30 @@ jobs:
 
       - name: Run Tests with Coverage
         run: |
-          swift test --enable-code-coverage
+          xcodebuild test \
+            -scheme OpenMedTracker \
+            -destination '${{ matrix.destination }}' \
+            -enableCodeCoverage YES \
+            -derivedDataPath .build
 
       - name: Generate Coverage Report
         if: matrix.destination == 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.2'
         run: |
-          # Get the build directory
-          BUILD_DIR=$(swift build --show-bin-path)
-          PARENT_DIR=$(dirname "$BUILD_DIR")
+          # Find the .xcresult bundle
+          XCRESULT=$(find .build -name "*.xcresult" | head -1)
 
-          # Find the .profdata file
-          PROFDATA_FILE=$(find "$PARENT_DIR" -name "*.profdata" | head -1)
-
-          if [ -z "$PROFDATA_FILE" ]; then
-            echo "Error: No .profdata file found"
+          if [ -z "$XCRESULT" ]; then
+            echo "Error: No .xcresult file found"
             exit 1
           fi
 
-          echo "Found profdata file: $PROFDATA_FILE"
+          echo "Found xcresult: $XCRESULT"
 
-          # Get the test binary
-          TEST_BINARY="$BUILD_DIR/OpenMedTrackerPackageTests.xctest/Contents/MacOS/OpenMedTrackerPackageTests"
-
-          if [ ! -f "$TEST_BINARY" ]; then
-            echo "Error: Test binary not found at $TEST_BINARY"
-            echo "Searching for test binaries..."
-            find "$PARENT_DIR" -name "*Tests" -type f
-            exit 1
-          fi
-
-          # Generate coverage report
-          xcrun llvm-cov export \
-            "$TEST_BINARY" \
-            -instr-profile="$PROFDATA_FILE" \
-            -format=lcov \
-            -ignore-filename-regex=".build|Tests" \
-            > coverage.lcov
+          # Convert to coverage report
+          xcrun xccov view --report --json "$XCRESULT" > coverage.json
 
           # Generate human-readable report
-          xcrun llvm-cov report \
-            "$TEST_BINARY" \
-            -instr-profile="$PROFDATA_FILE" \
-            -ignore-filename-regex=".build|Tests" \
-            > coverage-report.txt
+          xcrun xccov view --report "$XCRESULT" > coverage-report.txt
 
           # Display coverage summary
           echo "Coverage Summary:"
@@ -103,18 +84,24 @@ jobs:
         with:
           name: coverage-report
           path: |
-            coverage.lcov
+            coverage.json
             coverage-report.txt
           retention-days: 30
 
       - name: Check Coverage Threshold
         if: matrix.destination == 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.2'
         run: |
-          # Extract overall coverage percentage
-          COVERAGE=$(grep "TOTAL" coverage-report.txt | awk '{print $NF}' | sed 's/%//')
+          # Extract overall coverage percentage from JSON
+          if [ ! -f coverage.json ]; then
+            echo "Warning: coverage.json not found, skipping threshold check"
+            exit 0
+          fi
 
-          if [ -z "$COVERAGE" ]; then
-            echo "Warning: Could not extract coverage percentage"
+          # Parse coverage from xccov JSON output
+          COVERAGE=$(python3 -c "import json,sys; data=json.load(open('coverage.json')); print(data.get('lineCoverage', 0)*100)" 2>/dev/null || echo "0")
+
+          if [ -z "$COVERAGE" ] || [ "$COVERAGE" = "0" ]; then
+            echo "Warning: Could not extract coverage percentage, skipping threshold check"
             exit 0
           fi
 
@@ -137,7 +124,7 @@ jobs:
         with:
           name: test-results-${{ matrix.destination }}
           path: |
-            .build/debug/*.xcresult
+            .build/**/*.xcresult
           retention-days: 30
 
   build:
@@ -159,7 +146,11 @@ jobs:
 
       - name: Build for iOS
         run: |
-          swift build -c ${{ matrix.configuration }}
+          xcodebuild build \
+            -scheme OpenMedTracker \
+            -destination 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.2' \
+            -configuration ${{ matrix.configuration }} \
+            -derivedDataPath .build
 
       - name: Verify iOS 16+ Compatibility
         run: |
