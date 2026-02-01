@@ -124,7 +124,7 @@ struct ScheduleFormView: View {
                 }
 
                 Section {
-                    Text("This schedule will create dose reminders for \(medication.name ?? "this medication") at \(formatTime(selectedTime)) \(frequencyDescription)")
+                    Text(scheduleDescription)
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -176,6 +176,12 @@ struct ScheduleFormView: View {
         default:
             return ""
         }
+    }
+
+    private var scheduleDescription: String {
+        let medicationName = medication.name ?? "this medication"
+        let time = formatTime(selectedTime)
+        return "This schedule will create dose reminders for \(medicationName) at \(time) \(frequencyDescription)"
     }
 
     private func formatTime(_ date: Date) -> String {

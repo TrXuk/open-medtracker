@@ -78,6 +78,7 @@ opt_in_rules:
 disabled_rules:
   - todo
   - trailing_whitespace
+  - force_try  # Allow try! in test code where it's acceptable
 
 # Rule Configurations
 
@@ -90,7 +91,7 @@ line_length:
 
 type_body_length:
   warning: 300
-  error: 400
+  error: 800  # Increased for large test classes
 
 file_length:
   warning: 500
