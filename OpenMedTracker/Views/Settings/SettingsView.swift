@@ -18,7 +18,15 @@ struct SettingsView: View {
     @State private var showingClearDataAlert = false
     @State private var exportURL: URL?
 
-    init(viewModel: SettingsViewModel = SettingsViewModel()) {
+    init() {
+        let viewModel = SettingsViewModel(
+            persistenceController: .shared,
+            notificationService: NotificationService()
+        )
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
+
+    init(viewModel: SettingsViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
     }
 

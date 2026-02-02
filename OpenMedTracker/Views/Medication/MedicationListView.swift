@@ -9,9 +9,7 @@ struct MedicationListView: View {
     @State private var selectedMedication: Medication?
 
     init() {
-        // Initialize with default context - will be replaced by environment
-        let context = PersistenceController.shared.container.viewContext
-        _viewModel = StateObject(wrappedValue: MedicationListViewModel(context: context))
+        _viewModel = StateObject(wrappedValue: MedicationListViewModel())
     }
 
     var body: some View {

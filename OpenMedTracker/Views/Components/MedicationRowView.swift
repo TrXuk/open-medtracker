@@ -7,7 +7,7 @@ struct MedicationRowView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(medication.name ?? "Unknown Medication")
+                Text(medication.name)
                     .font(.headline)
 
                 Spacer()
@@ -23,12 +23,9 @@ struct MedicationRowView: View {
             }
 
             HStack {
-                if let dosageAmount = medication.dosageAmount,
-                   let dosageUnit = medication.dosageUnit {
-                    Text("\(dosageAmount, specifier: "%.1f") \(dosageUnit)")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
+                Text("\(medication.dosageAmount, specifier: "%.1f") \(medication.dosageUnit)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
 
                 Spacer()
 

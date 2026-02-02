@@ -223,34 +223,26 @@ struct ScheduleFormView: View {
             case .add:
                 try scheduleService.create(
                     for: medication,
-                    hour: Int16(hour),
-                    minute: Int16(minute),
+                    hour: hour,
+                    minute: minute,
                     frequency: frequency,
                     daysOfWeek: Int16(daysOfWeekValue),
                     in: viewContext
                 )
 
             case .edit(let schedule):
-                try scheduleService.updateTime(
-                    schedule,
-                    hour: Int16(hour),
-                    minute: Int16(minute),
-                    in: viewContext
-                )
+                // Create a new time of day from the hour and minute
+                let calendar = Calendar.current
+                let components = DateComponents(hour: hour, minute: minute)
+                let timeOfDay = calendar.date(from: components) ?? Date()
 
-                try scheduleService.updateDays(
+                try scheduleService.update(
                     schedule,
+                    timeOfDay: timeOfDay,
+                    frequency: frequency,
                     daysOfWeek: Int16(daysOfWeekValue),
-                    in: viewContext
+                    isEnabled: isEnabled
                 )
-
-                schedule.frequency = frequency
-
-                if isEnabled {
-                    try scheduleService.enable(schedule, in: viewContext)
-                } else {
-                    try scheduleService.disable(schedule, in: viewContext)
-                }
 
                 try viewContext.save()
             }

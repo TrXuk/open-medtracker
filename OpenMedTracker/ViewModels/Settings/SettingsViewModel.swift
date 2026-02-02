@@ -44,7 +44,7 @@ final class SettingsViewModel: ObservableObject {
 
     // MARK: - Initialization
 
-    init(
+    nonisolated init(
         persistenceController: PersistenceController = .shared,
         notificationService: NotificationService = NotificationService()
     ) {
@@ -233,10 +233,10 @@ final class SettingsViewModel: ObservableObject {
     private func timezoneEventToDict(_ event: TimezoneEvent) -> [String: Any] {
         [
             "id": event.id.uuidString,
-            "eventDate": ISO8601DateFormatter().string(from: event.eventDate),
-            "fromTimezone": event.fromTimezone,
-            "toTimezone": event.toTimezone,
-            "offsetMinutes": event.offsetMinutes
+            "transitionTime": ISO8601DateFormatter().string(from: event.transitionTime),
+            "previousTimezone": event.previousTimezone,
+            "newTimezone": event.newTimezone,
+            "timeDifferenceHours": event.timeDifferenceHours
         ]
     }
 

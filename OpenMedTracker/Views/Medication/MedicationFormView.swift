@@ -50,12 +50,12 @@ struct MedicationFormView: View {
 
         // Pre-populate fields if editing
         if case .edit(let medication) = mode {
-            _name = State(initialValue: medication.name ?? "")
-            _dosageAmount = State(initialValue: medication.dosageAmount != nil ? String(medication.dosageAmount!) : "")
-            _dosageUnit = State(initialValue: medication.dosageUnit ?? "mg")
+            _name = State(initialValue: medication.name)
+            _dosageAmount = State(initialValue: String(medication.dosageAmount))
+            _dosageUnit = State(initialValue: medication.dosageUnit)
             _instructions = State(initialValue: medication.instructions ?? "")
             _prescribedBy = State(initialValue: medication.prescribedBy ?? "")
-            _startDate = State(initialValue: medication.startDate ?? Date())
+            _startDate = State(initialValue: medication.startDate)
             _hasEndDate = State(initialValue: medication.endDate != nil)
             _endDate = State(initialValue: medication.endDate ?? Calendar.current.date(byAdding: .month, value: 1, to: Date()) ?? Date())
         }
@@ -173,8 +173,7 @@ struct MedicationFormView: View {
                     dosageAmount: amount,
                     dosageUnit: dosageUnit,
                     instructions: instructions.trimmingCharacters(in: .whitespaces).isEmpty ? nil : instructions,
-                    prescribedBy: prescribedBy.trimmingCharacters(in: .whitespaces).isEmpty ? nil : prescribedBy,
-                    in: viewContext
+                    prescribedBy: prescribedBy.trimmingCharacters(in: .whitespaces).isEmpty ? nil : prescribedBy
                 )
 
                 // Update dates separately if needed

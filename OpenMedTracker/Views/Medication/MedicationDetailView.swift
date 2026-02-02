@@ -11,10 +11,8 @@ struct MedicationDetailView: View {
     @State private var showingDeleteAlert = false
 
     init(medication: Medication) {
-        let context = PersistenceController.shared.container.viewContext
         _viewModel = StateObject(wrappedValue: MedicationDetailViewModel(
-            medication: medication,
-            context: context
+            medication: medication
         ))
     }
 
@@ -32,7 +30,7 @@ struct MedicationDetailView: View {
             }
             .padding()
         }
-        .navigationTitle(viewModel.medication.name ?? "Medication")
+        .navigationTitle(viewModel.medication?.name ?? "Medication")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -50,18 +48,22 @@ struct MedicationDetailView: View {
             }
         }
         .sheet(isPresented: $showingEditMedication) {
-            MedicationFormView(mode: .edit(viewModel.medication))
-                .environment(\.managedObjectContext, viewContext)
-                .onDisappear {
-                    viewModel.loadSchedules()
-                }
+            if let medication = viewModel.medication {
+                MedicationFormView(mode: .edit(medication))
+                    .environment(\.managedObjectContext, viewContext)
+                    .onDisappear {
+                        viewModel.loadSchedules()
+                    }
+            }
         }
         .sheet(isPresented: $showingAddSchedule) {
-            ScheduleFormView(medication: viewModel.medication, mode: .add)
-                .environment(\.managedObjectContext, viewContext)
-                .onDisappear {
-                    viewModel.loadSchedules()
-                }
+            if let medication = viewModel.medication {
+                ScheduleFormView(medication: medication, mode: .add)
+                    .environment(\.managedObjectContext, viewContext)
+                    .onDisappear {
+                        viewModel.loadSchedules()
+                    }
+            }
         }
         .alert("Delete Medication", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) { }
@@ -83,18 +85,17 @@ struct MedicationDetailView: View {
             VStack(alignment: .leading, spacing: 8) {
                 DetailRow(
                     label: "Name",
-                    value: viewModel.medication.name ?? "Unknown"
+                    value: viewModel.medication?.name ?? "Unknown"
                 )
 
-                if let dosageAmount = viewModel.medication.dosageAmount,
-                   let dosageUnit = viewModel.medication.dosageUnit {
+                if let medication = viewModel.medication {
                     DetailRow(
                         label: "Dosage",
-                        value: "\(dosageAmount, specifier: "%.1f") \(dosageUnit)"
+                        value: "\(medication.dosageAmount, specifier: "%.1f") \(medication.dosageUnit)"
                     )
                 }
 
-                if let prescribedBy = viewModel.medication.prescribedBy {
+                if let prescribedBy = viewModel.medication?.prescribedBy {
                     DetailRow(
                         label: "Prescribed By",
                         value: prescribedBy
