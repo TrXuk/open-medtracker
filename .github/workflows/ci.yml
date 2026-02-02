@@ -1,0 +1,134 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  SWIFT_VERSION: '5.9'
+
+jobs:
+  swiftlint:
+    name: SwiftLint
+    runs-on: macos-14
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install SwiftLint
+        run: brew install swiftlint
+
+      - name: Run SwiftLint
+        run: swiftlint --reporter github-actions-logging
+
+  build:
+    name: Build (SPM Package)
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.2'
+
+      - name: Swift Version
+        run: swift --version
+
+      - name: Verify Package Structure
+        run: |
+          # Verify Package.swift exists and is valid
+          if [ ! -f Package.swift ]; then
+            echo "Error: Package.swift not found"
+            exit 1
+          fi
+
+          # Verify iOS 16+ requirement
+          if ! grep -q "\.iOS(\.v16)" Package.swift; then
+            echo "Error: Package.swift does not specify iOS 16+ requirement"
+            echo "Current iOS version requirement:"
+            grep -A 2 "platforms:" Package.swift
+            exit 1
+          fi
+          echo "✓ Package structure verified"
+          echo "✓ iOS 16+ requirement verified"
+
+      - name: Build for iOS
+        run: |
+          # Build the SPM package for iOS (no .xcodeproj/.xcworkspace required)
+          # xcodebuild discovers Package.swift automatically
+          xcodebuild build \
+            -scheme OpenMedTracker \
+            -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
+            -derivedDataPath .build
+
+  test:
+    name: Test
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.2'
+
+      - name: Swift Version
+        run: swift --version
+
+      - name: Run Tests
+        run: |
+          # Run tests via SPM package (no .xcodeproj/.xcworkspace required)
+          xcodebuild test \
+            -scheme OpenMedTracker \
+            -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
+            -enableCodeCoverage YES \
+            -derivedDataPath .build
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: .build/
+          retention-days: 7
+
+  integration:
+    name: Integration Check
+    needs: [swiftlint, build, test]
+    runs-on: macos-14
+    if: always()
+
+    steps:
+      - name: Check All Jobs
+        run: |
+          # This job ensures all previous jobs passed
+          if [ "${{ needs.swiftlint.result }}" != "success" ]; then
+            echo "SwiftLint failed"
+            exit 1
+          fi
+          if [ "${{ needs.build.result }}" != "success" ]; then
+            echo "Build failed"
+            exit 1
+          fi
+          if [ "${{ needs.test.result }}" != "success" ]; then
+            echo "Tests failed"
+            exit 1
+          fi
+          echo "All checks passed!"
+
+      - name: Summary
+        run: |
+          echo "### CI Pipeline Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **SwiftLint**: ${{ needs.swiftlint.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Build**: ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Test**: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All quality checks completed successfully!" >> $GITHUB_STEP_SUMMARY

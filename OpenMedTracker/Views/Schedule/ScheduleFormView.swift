@@ -64,12 +64,7 @@ struct ScheduleFormView: View {
 
         // Pre-populate fields if editing
         if case .edit(let schedule) = mode {
-            let hour = Int(schedule.timeHour ?? 9)
-            let minute = Int(schedule.timeMinute ?? 0)
-            var components = DateComponents()
-            components.hour = hour
-            components.minute = minute
-            _selectedTime = State(initialValue: Calendar.current.date(from: components) ?? Date())
+            _selectedTime = State(initialValue: schedule.timeOfDay)
             _frequency = State(initialValue: schedule.frequency ?? "daily")
             _isEnabled = State(initialValue: schedule.isEnabled)
 
@@ -129,7 +124,7 @@ struct ScheduleFormView: View {
                 }
 
                 Section {
-                    Text("This schedule will create dose reminders for \(medication.name ?? "this medication") at \(formatTime(selectedTime)) \(frequencyDescription)")
+                    Text(scheduleDescription)
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -183,6 +178,12 @@ struct ScheduleFormView: View {
         }
     }
 
+    private var scheduleDescription: String {
+        let medicationName = medication.name ?? "this medication"
+        let time = formatTime(selectedTime)
+        return "This schedule will create dose reminders for \(medicationName) at \(time) \(frequencyDescription)"
+    }
+
     private func formatTime(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
@@ -222,34 +223,26 @@ struct ScheduleFormView: View {
             case .add:
                 try scheduleService.create(
                     for: medication,
-                    hour: Int16(hour),
-                    minute: Int16(minute),
+                    hour: hour,
+                    minute: minute,
                     frequency: frequency,
                     daysOfWeek: Int16(daysOfWeekValue),
                     in: viewContext
                 )
 
             case .edit(let schedule):
-                try scheduleService.updateTime(
-                    schedule,
-                    hour: Int16(hour),
-                    minute: Int16(minute),
-                    in: viewContext
-                )
+                // Create a new time of day from the hour and minute
+                let calendar = Calendar.current
+                let components = DateComponents(hour: hour, minute: minute)
+                let timeOfDay = calendar.date(from: components) ?? Date()
 
-                try scheduleService.updateDays(
+                try scheduleService.update(
                     schedule,
+                    timeOfDay: timeOfDay,
+                    frequency: frequency,
                     daysOfWeek: Int16(daysOfWeekValue),
-                    in: viewContext
+                    isEnabled: isEnabled
                 )
-
-                schedule.frequency = frequency
-
-                if isEnabled {
-                    try scheduleService.enable(schedule, in: viewContext)
-                } else {
-                    try scheduleService.disable(schedule, in: viewContext)
-                }
 
                 try viewContext.save()
             }
@@ -291,8 +284,13 @@ struct ScheduleFormView: View {
 
             let schedule = Schedule(context: context)
             schedule.medication = medication
-            schedule.timeHour = 9
-            schedule.timeMinute = 0
+
+            // Set time to 9:00 AM
+            var components = DateComponents()
+            components.hour = 9
+            components.minute = 0
+            schedule.timeOfDay = Calendar.current.date(from: components) ?? Date()
+
             schedule.frequency = "daily"
             schedule.daysOfWeek = 127
             schedule.isEnabled = true

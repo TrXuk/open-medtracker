@@ -7,7 +7,7 @@ struct MedicationRowView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(medication.name ?? "Unknown Medication")
+                Text(medication.name)
                     .font(.headline)
 
                 Spacer()
@@ -23,24 +23,21 @@ struct MedicationRowView: View {
             }
 
             HStack {
-                if let dosageAmount = medication.dosageAmount,
-                   let dosageUnit = medication.dosageUnit {
-                    Text("\(dosageAmount, specifier: "%.1f") \(dosageUnit)")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
+                Text("\(medication.dosageAmount, specifier: "%.1f") \(medication.dosageUnit)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
 
                 Spacer()
 
                 if let schedules = medication.schedules as? Set<Schedule>,
                    let nextSchedule = schedules
                     .filter({ $0.isEnabled })
-                    .sorted(by: { ($0.timeHour ?? 0) * 60 + ($0.timeMinute ?? 0) < ($1.timeHour ?? 0) * 60 + ($1.timeMinute ?? 0) })
+                    .sorted(by: { getMinutesFromMidnight($0.timeOfDay) < getMinutesFromMidnight($1.timeOfDay) })
                     .first {
                     HStack(spacing: 4) {
                         Image(systemName: "clock")
                             .font(.caption)
-                        Text(formatTime(hour: Int(schedules.first?.timeHour ?? 0), minute: Int(schedules.first?.timeMinute ?? 0)))
+                        Text(formatTime(nextSchedule.timeOfDay))
                             .font(.caption)
                     }
                     .foregroundColor(.blue)
@@ -57,17 +54,15 @@ struct MedicationRowView: View {
         .padding(.vertical, 4)
     }
 
-    private func formatTime(hour: Int, minute: Int) -> String {
+    private func formatTime(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
-        let calendar = Calendar.current
-        var components = DateComponents()
-        components.hour = hour
-        components.minute = minute
-        if let date = calendar.date(from: components) {
-            return formatter.string(from: date)
-        }
-        return "\(hour):\(String(format: "%02d", minute))"
+        return formatter.string(from: date)
+    }
+
+    private func getMinutesFromMidnight(_ date: Date) -> Int {
+        let components = Calendar.current.dateComponents([.hour, .minute], from: date)
+        return (components.hour ?? 0) * 60 + (components.minute ?? 0)
     }
 }
 

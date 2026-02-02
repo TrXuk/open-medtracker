@@ -8,8 +8,7 @@ struct DoseHistoryView: View {
     @State private var showingFilters = false
 
     init() {
-        let context = PersistenceController.shared.container.viewContext
-        _viewModel = StateObject(wrappedValue: DoseHistoryViewModel(context: context))
+        _viewModel = StateObject(wrappedValue: DoseHistoryViewModel())
     }
 
     var body: some View {
@@ -261,7 +260,7 @@ struct DoseHistoryFiltersView: View {
         self.viewModel = viewModel
         _startDate = State(initialValue: viewModel.startDate)
         _endDate = State(initialValue: viewModel.endDate)
-        _selectedStatus = State(initialValue: viewModel.selectedStatus)
+        _selectedStatus = State(initialValue: viewModel.selectedStatus?.rawValue)
     }
 
     var body: some View {
@@ -329,8 +328,9 @@ struct DoseHistoryFiltersView: View {
     }
 
     private func applyFilters() {
-        viewModel.setDateRange(start: startDate, end: endDate)
-        viewModel.setStatusFilter(selectedStatus)
+        viewModel.startDate = startDate
+        viewModel.endDate = endDate
+        viewModel.selectedStatus = selectedStatus.flatMap { DoseHistory.Status(rawValue: $0) }
     }
 }
 

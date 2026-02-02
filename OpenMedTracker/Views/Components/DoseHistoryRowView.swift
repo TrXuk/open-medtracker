@@ -16,15 +16,13 @@ struct DoseHistoryRowView: View {
                     .font(.headline)
 
                 // Scheduled time
-                if let scheduledTime = doseHistory.scheduledTime {
-                    HStack(spacing: 4) {
-                        Image(systemName: "calendar")
-                            .font(.caption)
-                        Text(formatDate(scheduledTime))
-                            .font(.subheadline)
-                    }
-                    .foregroundColor(.secondary)
+                HStack(spacing: 4) {
+                    Image(systemName: "calendar")
+                        .font(.caption)
+                    Text(formatDate(doseHistory.scheduledTime))
+                        .font(.subheadline)
                 }
+                .foregroundColor(.secondary)
 
                 // Actual time if taken
                 if doseHistory.status == "taken", let actualTime = doseHistory.actualTime {
@@ -51,11 +49,9 @@ struct DoseHistoryRowView: View {
                 }
 
                 // Timezone info
-                if let timezone = doseHistory.recordedTimezone {
-                    Text("Timezone: \(timezone)")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
+                Text("Timezone: \(doseHistory.timezoneIdentifier)")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
 
                 // Notes
                 if let notes = doseHistory.notes, !notes.isEmpty {
@@ -95,7 +91,7 @@ struct DoseHistoryRowView: View {
             dose.status = "taken"
             dose.scheduledTime = Date()
             dose.actualTime = Date().addingTimeInterval(300) // 5 minutes later
-            dose.recordedTimezone = "America/New_York"
+            dose.timezoneIdentifier = "America/New_York"
             return dose
         }())
     }

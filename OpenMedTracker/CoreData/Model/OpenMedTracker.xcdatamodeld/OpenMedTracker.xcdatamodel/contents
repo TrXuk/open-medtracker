@@ -28,7 +28,7 @@
         <attribute name="timeOfDay" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="updatedAt" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="doseHistories" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="DoseHistory" inverseName="schedule" inverseEntity="DoseHistory"/>
-        <relationship name="medication" maxCount="1" deletionRule="Nullify" destinationEntity="Medication" inverseName="schedules" inverseEntity="Medication"/>
+        <relationship name="medication" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Medication" inverseName="schedules" inverseEntity="Medication"/>
         <uniquenessConstraints>
             <uniquenessConstraint>
                 <constraint value="id"/>
@@ -43,7 +43,7 @@
         <attribute name="scheduledTime" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="status" attributeType="String" defaultValueString="pending"/>
         <attribute name="timezoneIdentifier" attributeType="String"/>
-        <relationship name="schedule" maxCount="1" deletionRule="Nullify" destinationEntity="Schedule" inverseName="doseHistories" inverseEntity="Schedule"/>
+        <relationship name="schedule" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Schedule" inverseName="doseHistories" inverseEntity="Schedule"/>
         <relationship name="timezoneEvent" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="TimezoneEvent" inverseName="affectedDoses" inverseEntity="TimezoneEvent"/>
         <uniquenessConstraints>
             <uniquenessConstraint>

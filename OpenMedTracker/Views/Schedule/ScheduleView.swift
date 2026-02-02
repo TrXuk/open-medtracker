@@ -4,12 +4,11 @@ import CoreData
 /// Main schedule view showing today's doses and upcoming schedules
 struct ScheduleView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    @StateObject private var viewModel: ScheduleViewModel
+    @StateObject private var viewModel: DailyScheduleViewModel
     @State private var showingDatePicker = false
 
     init() {
-        let context = PersistenceController.shared.container.viewContext
-        _viewModel = StateObject(wrappedValue: ScheduleViewModel(context: context))
+        _viewModel = StateObject(wrappedValue: DailyScheduleViewModel())
     }
 
     var body: some View {
@@ -176,25 +175,23 @@ struct DoseCard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(dose.medicationName ?? "Unknown")
+                    Text(dose.medicationName)
                         .font(.headline)
 
-                    if let scheduledTime = dose.scheduledTime {
-                        HStack(spacing: 4) {
-                            Image(systemName: "clock")
-                                .font(.caption)
-                            Text(formatTime(scheduledTime))
-                                .font(.subheadline)
-                        }
-                        .foregroundColor(.secondary)
+                    HStack(spacing: 4) {
+                        Image(systemName: "clock")
+                            .font(.caption)
+                        Text(formatTime(dose.scheduledTime))
+                            .font(.subheadline)
                     }
+                    .foregroundColor(.secondary)
                 }
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel(doseAccessibilityLabel)
 
                 Spacer()
 
-                StatusBadgeView(status: dose.status ?? "pending")
+                StatusBadgeView(status: dose.status)
             }
 
             if dose.status == "pending" {
