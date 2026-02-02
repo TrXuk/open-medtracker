@@ -72,6 +72,21 @@ Complete user interface implementation with:
 
 See [UI Implementation Guide](./docs/UI_IMPLEMENTATION.md) for detailed documentation.
 
+### Phase 2: Onboarding Flow ✅
+
+First-time user experience introducing the app and requesting permissions:
+
+- **Welcome Screen**: App introduction with branding
+- **Feature Highlights**: 3-page tour of key features
+  - Medication tracking and scheduling
+  - Timezone-aware scheduling for travelers
+  - Privacy-first, offline-only storage
+- **Permissions**: Notification permission request
+- **State Management**: Persistent completion tracking with UserDefaults
+- **User Control**: Skip option and swipe navigation
+
+See [Onboarding Documentation](./docs/ONBOARDING.md) for detailed documentation.
+
 ### Phase 2.1: Core Data Stack ✅
 
 Complete data layer implementation:

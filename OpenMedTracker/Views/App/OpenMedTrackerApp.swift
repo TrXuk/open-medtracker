@@ -11,11 +11,19 @@ struct OpenMedTrackerApp: App {
     // App settings for appearance mode
     @ObservedObject private var settings = AppSettings.shared
 
+    // Track onboarding completion state
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
-                .preferredColorScheme(colorScheme)
+            if hasCompletedOnboarding {
+                ContentView()
+                    .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                    .preferredColorScheme(colorScheme)
+            } else {
+                OnboardingView(isOnboardingComplete: $hasCompletedOnboarding)
+                    .preferredColorScheme(colorScheme)
+            }
         }
     }
 
